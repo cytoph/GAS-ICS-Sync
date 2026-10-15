@@ -31,8 +31,9 @@ var sourceCalendars = [                // The ics/ical urls that you want to get
 
 ];
 
-var howFrequent = 15;                     // What interval (minutes) to run this script on to check for new events.  Any integer can be used, but will be rounded up to 5, 10, 15, 30 or to the nearest hour after that.. 60, 120, etc. 1440 (24 hours) is the maximum value.  Anything above that will be replaced with 1440.
-var onlyFutureEvents = false;             // If you turn this to "true", past events will not be synced (this will also removed past events from the target calendar if removeEventsFromCalendar is true)
+var howFrequent = 15;                      // What interval (minutes) to run this script on to check for new events.  Any integer can be used, but will be rounded up to 5, 10, 15, 30 or to the nearest hour after that.. 60, 120, etc. 1440 (24 hours) is the maximum value.  Anything above that will be replaced with 1440.
+var onlyFutureEvents = false;              // If you turn this to "true", events later than eventsSince will not be synced (this will also removed past events from the target calendar if removeEventsFromCalendar is true)
+var eventsSince = "";           // OPTIONAL: If "onlyFutureEvents" is set to true, this is the date from which on events are synced ("YYYY-MM-DD", or empty for today)
 var addEventsToCalendar = true;           // If you turn this to "false", you can check the log (View > Logs) to make sure your events are being read correctly before turning this on
 var modifyExistingEvents = true;          // If you turn this to "false", any event in the feed that was modified after being added to the calendar will not update
 var removeEventsFromCalendar = true;      // If you turn this to "true", any event created by the script that is not found in the feed will be removed.
@@ -48,7 +49,7 @@ var overrideVisibility = "";              // Changes the visibility of the event
 var addTasks = false;
 
 var emailSummary = false;                 // Will email you when an event is added/modified/removed to your calendar
-var email = "";                           // OPTIONAL: If "emailSummary" is set to true or you want to receive update notifications, you will need to provide your email address
+var email = "";   // OPTIONAL: If "emailSummary" is set to true or you want to receive update notifications, you will need to provide your email address
 var customEmailSubject = "";              // OPTIONAL: If you want to change the email subject, provide a custom one here. Default: "GAS-ICS-Sync Execution Summary"
 var dateFormat = "YYYY-MM-DD"             // date format in the email summary (e.g. "YYYY-MM-DD", "DD.MM.YYYY", "MM/DD/YYYY". separators are ".", "-" and "/")
 
@@ -153,8 +154,10 @@ function startSync(){
 
   PropertiesService.getUserProperties().setProperty('LastRun', new Date().getTime());
 
-  if (onlyFutureEvents)
-    startUpdateTime = new ICAL.Time.fromJSDate(new Date());
+  if (onlyFutureEvents) {
+    eventsSince = eventsSince || new Date().toISOString().split('T')[0];
+    startUpdateTime = new ICAL.Time.fromDateString(eventsSince);
+  }
 
   //Disable email notification if no mail adress is provided
   emailSummary = emailSummary && email != "";
@@ -175,6 +178,10 @@ function startSync(){
     //------------------------ Fetch URL items ------------------------
     var responses = fetchSourceCalendars(sourceCalendarURLs);
     Logger.log("Syncing " + responses.length + " calendars to " + targetCalendarName);
+
+    if(!responses || responses.length === 0) {
+      continue;
+    }
 
     //------------------------ Get target calendar information------------------------
     var targetCalendar = setupTargetCalendar(targetCalendarName);

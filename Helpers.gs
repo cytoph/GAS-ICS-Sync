@@ -134,7 +134,7 @@ function fetchSourceCalendars(sourceCalendarURLs){
     var colorId = source[1];
     
     callWithBackoff(function() {
-      var urlResponse = UrlFetchApp.fetch(url, { 'validateHttpsCertificates' : false, 'muteHttpExceptions' : true });
+      var urlResponse = UrlFetchApp.fetch(url, { 'validateHttpsCertificates' : false, 'muteHttpExceptions' : true });      
       if (urlResponse.getResponseCode() == 200){
         var icsContent = urlResponse.getContentText()
         const icsRegex = RegExp("(BEGIN:VCALENDAR.*?END:VCALENDAR)", "s")
@@ -159,7 +159,8 @@ function fetchSourceCalendars(sourceCalendarURLs){
         result.push([urlContent[0], colorId]);
         return; 
       }
-      else{ //Throw here to make callWithBackoff run again
+      else{ //Throw here to make callWithBackoff run again      
+        //DriveApp.createFile("error_response.html", urlResponse.getContentText(), MimeType.HTML);
         throw "Error: Encountered HTTP error " + urlResponse.getResponseCode() + " when accessing " + url; 
       }
     }, defaultMaxRetries);
