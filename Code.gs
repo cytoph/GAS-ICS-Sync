@@ -171,21 +171,24 @@ function startSync(){
     calendarEventsMD5s = [];
     recurringEvents = [];
 
-    targetCalendarName = calendar[0];
+    targetCalendarId = calendar[0];
+    targetCalendarName = "";
     var sourceCalendarURLs = calendar[1];
     var vevents;
 
     //------------------------ Fetch URL items ------------------------
     var responses = fetchSourceCalendars(sourceCalendarURLs);
-    Logger.log("Syncing " + responses.length + " calendars to " + targetCalendarName);
+
 
     if(!responses || responses.length === 0) {
       continue;
     }
 
     //------------------------ Get target calendar information------------------------
-    var targetCalendar = setupTargetCalendar(targetCalendarName);
+    var targetCalendar = setupTargetCalendar(targetCalendarId);
     targetCalendarId = targetCalendar.id;
+    targetCalendarName = targetCalendar.summaryOverride || targetCalendar.summary || targetCalendarId;
+    Logger.log("Syncing " + responses.length + " calendars to " + targetCalendarName);
     Logger.log("Working on calendar: " + targetCalendarId);
 
     //------------------------ Parse existing events --------------------------

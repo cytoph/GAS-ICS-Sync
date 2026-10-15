@@ -84,7 +84,8 @@ String.prototype.includes = function(phrase){
 }
 
 /**
- * Takes an array of ICS calendars and target Google calendars and combines them
+ * Groups mappings by their second element (target calendar ID for source mappings).
+ * Also groups email-summary entries by their display label.
  *
  * @param {Array.string} calendarMap - User-defined calendar map
  * @return {Array.string} Condensed calendar map
@@ -170,25 +171,21 @@ function fetchSourceCalendars(sourceCalendarURLs){
 }
 
 /**
- * Gets the user's Google Calendar with the specified name.
- * A new Calendar will be created if the user does not have a Calendar with the specified name.
+ * Gets an existing sync target by the ID supplied in the source mapping.
+ * Fails if it is unavailable or not writable; never creates a replacement calendar.
  *
- * @param {string} targetCalendarName - The name of the calendar to return
- * @return {Calendar} The calendar retrieved or created
+ * @param {string} targetCalendarId - The existing target Google Calendar ID
+ * @return {Calendar} The existing, writable calendar
  */
-function setupTargetCalendar(targetCalendarName){
-  var targetCalendar = Calendar.CalendarList.list({showHidden: true, maxResults: 250}).items.filter(function(cal) {
-    return ((cal.summaryOverride || cal.summary) == targetCalendarName) &&
-                (cal.accessRole == "owner" || cal.accessRole == "writer");
-  })[0];
+function setupTargetCalendar(targetCalendarId){
+  if (typeof targetCalendarId !== "string" || targetCalendarId.trim() === ""){
+    throw new Error("Each source calendar mapping must specify a target calendar ID.");
+  }
 
-  if(targetCalendar == null){
-    Logger.log("Creating Calendar: " + targetCalendarName);
-    targetCalendar = Calendar.newCalendar();
-    targetCalendar.summary = targetCalendarName;
-    targetCalendar.description = "Created by GAS";
-    targetCalendar.timeZone = Calendar.Settings.get("timezone").value;
-    targetCalendar = Calendar.Calendars.insert(targetCalendar);
+  var targetCalendar = Calendar.CalendarList.get(targetCalendarId);
+
+  if (!targetCalendar || (targetCalendar.accessRole !== "owner" && targetCalendar.accessRole !== "writer")){
+    throw new Error("Configured sync target is unavailable or not writable: " + targetCalendarId);
   }
 
   return targetCalendar;
