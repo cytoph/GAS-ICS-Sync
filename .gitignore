@@ -1,2 +1,5 @@
 # Local configuration, assembly scripts and generated source
 /.local/
+
+# Local Git worktrees
+/.worktrees/
